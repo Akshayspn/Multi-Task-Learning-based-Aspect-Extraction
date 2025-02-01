@@ -1,7 +1,7 @@
 # Multitask Learning Based Aspect Detection
 
 ## Project Overview
-This project focuses on **Aspect-Based Sentiment Analysis (ABSA)** by identifying both **implicit and explicit aspects** in customer reviews. The goal is to develop a novel **multitask model** that can outperform baseline models in detecting aspects at a fine-grained level.
+This project focuses on **Aspect-Based Sentiment Analysis (ABSA)** by identifying both **implicit and explicit aspects** in customer reviews. The goal of this project is to develop a novel **multitask model** for explicit and implicit aspect detection that can outperform baseline models in detecting aspects at a fine-grained level.
 
 ### Key Contributions
 - **Multitask Learning**: A novel multitask model using **BERT** for joint **token classification** and **masked language modeling (MLM)**.
