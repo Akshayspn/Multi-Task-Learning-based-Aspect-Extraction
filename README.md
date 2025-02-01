@@ -108,7 +108,7 @@ This project presents a **novel multitask model** that enhances **Aspect-Based S
 
 ## Author
 - **Researcher:** [Akshay Chauhan]
-- **Publication Target:** IEEE Journals
+
 
 For further inquiries, feel free to contact **[akshaychauhan.jss@gmail.com]**.
 
