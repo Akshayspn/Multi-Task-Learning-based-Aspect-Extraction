@@ -1,115 +1,107 @@
-# Multitask Learning Based Aspect Detection
+# Multi-Task Learning for Aspect-Based Sentiment Analysis (ABSA)
 
-## Project Overview
-This project focuses on **Aspect-Based Sentiment Analysis (ABSA)** by identifying both **implicit and explicit aspects** in customer reviews. The goal of this project is to develop a novel **multitask model** for explicit and implicit aspect detection that can outperform baseline models in detecting aspects at a fine-grained level.
+## Overview
+This repository implements a **Multi-Task Learning** approach for **Aspect-Based Sentiment Analysis (ABSA)** using **BERT**. The model jointly learns **Token Classification** and **Masked Language Modeling (MLM)** to improve aspect identification and classification. Additionally, it includes **comparison models** such as:
+- **BERT-BIO Tagger**
+- **Standalone MLM**
+- **BiLSTM-CRF**
+- **GPT2-DistilBERT Fusion Model** (Ensemble Learning)
 
-### Key Contributions
-- **Multitask Learning**: A novel multitask model using **BERT** for joint **token classification** and **masked language modeling (MLM)**.
-- **BIO Tagging for Aspect Detection**: Automatic labeling of aspects using **spaCy dependency parsing and POS tagging**.
-- **Comparative Analysis**: Performance comparison with **BERT-based token classification, standalone MLM, and BiLSTM-CRF models**.
-- **Attention Visualization**: Heatmaps to analyze token-level attention.
+The system is optimized for performance using **GPU acceleration (CUDA), cuDF (NVIDIA RAPIDS), and spaCy for dependency parsing**.
 
----
+## Features
+- **Multi-task learning** for improved aspect extraction
+- **BIO tagging** for explicit and implicit aspect detection
+- **Attention visualization** for interpretability
+- **Token classification with BERT** for aspect extraction
+- **BiLSTM-CRF implementation** for comparison
+- **GPT2-DistilBERT Fusion Model for sentiment classification**
+- **Evaluation metrics:** F1-score, precision, recall, accuracy, aspect coverage
 
-## Installation & Dependencies
-To set up the environment, install the required dependencies:
-
+## Dependencies
+Ensure the following libraries are installed before running the code:
 ```bash
-pip install datasets spacy transformers torch scikit-learn tqdm seaborn matplotlib
+pip install datasets sympy==1.12.0 spacy cudf torch transformers
+pip install --extra-index-url=https://pypi.nvidia.com cudf-cu12
 python -m spacy download en_core_web_sm
 ```
 
----
-
 ## Dataset
-We use the **Yelp Polarity dataset**, which is automatically loaded from the `datasets` library.
+The model is tested on **Amazon Gift Cards reviews dataset** (`Gift_Cards.jsonl`). It preprocesses the dataset using **spaCy-based dependency parsing** to generate dynamic BIO tags.
 
-- **Preprocessing**:
-  - Text is dynamically tagged with BIO labels.
-  - Labels are derived using **POS tagging and dependency parsing**.
-  - The dataset is split into **train (75%)**, **validation (15%)**, and **test (10%)** sets.
+### Data Download
+Download and unzip the dataset using the following commands:
+```bash
+!wget "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_2023/raw/review_categories/Gift_Cards.jsonl.gz"
+!gunzip "/content/Gift_Cards.jsonl.gz"
+```
 
----
+## Model Architecture
+### 1. Multi-Task Model
+- **Shared Encoder:** BERT
+- **Token Classification Head:** Identifies explicit/implicit aspects using BIO tagging
+- **MLM Head:** Enhances representation learning
 
-## Model Architectures
-### 1. **Multitask Model (Proposed)**
-- **Shared Encoder:** BERT-based.
-- **Tasks:**
-  - **Token Classification**: Classifies tokens into `B`, `I`, and `O` labels for aspect detection.
-  - **Masked Language Modeling (MLM)**: Helps improve contextual understanding.
-- **Loss Function:** Combines both task losses for joint training.
+### 2. Comparison Models
+- **BERT-BIO Tagger:** Uses BERT for sequence labeling
+- **Standalone MLM:** Uses BERT for masked language modeling
+- **BiLSTM-CRF:** Uses LSTM-based sequence labeling
+- **GPT2-DistilBERT Fusion Model:** Uses ensemble learning for sentiment classification
 
-### 2. **Baseline Models**
-- **BERT for Token Classification** (BIO tagging approach).
-- **Standalone Masked Language Model (MLM)**.
-- **BiLSTM-CRF**: Uses an LSTM network with a CRF layer for sequence labeling.
-
----
+## Data Preprocessing
+- **Tokenization:** Uses `BertTokenizerFast`
+- **BIO Tagging:** Utilizes **spaCy dependency parsing** for dynamic aspect labeling
+- **cuDF Acceleration:** Converts DataFrames to RAPIDS format for faster processing
+- **Data Splitting:** 75% training, 15% validation, 10% testing
 
 ## Training & Evaluation
-### **Training**
-- **Optimizer:** AdamW (learning rate: 3e-5).
-- **Scheduler:** Linear learning rate decay.
-- **Batch Size:** 16.
-- **Epochs:** Adjustable (default: 1).
-- **Weighted Loss Function:** Applied to balance class distribution.
-
-### **Evaluation Metrics**
-Each model is evaluated on the test set using:
-- **F1-Score** (weighted)
-- **Precision & Recall**
-- **Accuracy**
-
----
-
-## Attention Visualization
-The project provides an **attention heatmap visualization** to analyze what the multitask model focuses on when processing a sentence.
-
-### **Example Output**
-The heatmap helps in understanding which tokens contribute to aspect detection.
+### Training
+The model is trained using:
+- **AdamW optimizer** (learning rate: `3e-5`, weight decay: `0.01`)
+- **Gradient accumulation** (`2 steps` to reduce memory usage)
+- **Cross-entropy loss with class weighting** to handle class imbalance
 
 ```python
-visualize_attention_heatmap(multi_task_model, "<<Your Sample reviews>>", tokenizer, device)
+train_model(multi_task_model, train_loader, val_loader, device, tokenizer)
 ```
 
----
-
-## Usage
-### **Running the Project**
-1. **Preprocess Data:** Automatically handled when running the script.
-2. **Train Models:** Execute the training pipeline.
-3. **Evaluate Models:** Compare results across different architectures.
-4. **Visualize Attention:** Generate attention heatmaps.
-
-### **Command to Run the Script**
-```bash
-python yelp_final_code.py
+### Evaluation
+- **Token-Level Accuracy**
+- **Aspect Accuracy (Explicit & Implicit)**
+- **Aspect Coverage Metrics**
+- **Sentiment Classification Performance (GPT2-DistilBERT Fusion Model)**
+```python
+evaluate_model(multi_task_model, test_loader, device, tokenizer, task="multi-task test")
 ```
 
----
+## Attention Visualization
+The code includes **attention heatmap visualization** for interpretability. It extracts short sentences (`<30 words`) for clearer visualization.
+```python
+visualize_attention_heatmap(multi_task_model, sentence, tokenizer, device)
+```
 
-## Results & Findings
-- **The proposed multitask model outperforms baselines** in implicit and explicit aspect detection.
-- **Incorporating MLM enhances performance** by providing better contextual understanding.
-- **Attention maps reveal how the model assigns importance** to different tokens in a sentence.
+## Execution Steps
+1. **Load and preprocess the dataset**
+2. **Initialize models (Multi-Task, BERT-BIO, MLM, BiLSTM-CRF, GPT2-DistilBERT Fusion)**
+3. **Train models on labeled dataset**
+4. **Evaluate models using multiple metrics**
+5. **Visualize attention heatmaps** for insights
 
----
-
-## Future Work
-- **Hyperparameter tuning** for further performance improvement.
-- **Integration with explainability techniques** such as **semantic graphs**.
-
----
+## Results
+- **Multi-Task Model performs best** in explicit & implicit aspect extraction
+- **BERT-BIO performs comparably but lacks robustness in implicit aspects**
+- **BiLSTM-CRF struggles with complex dependencies**
+- **Standalone MLM helps improve representation learning**
+- **GPT2-DistilBERT Fusion Model outperforms individual models for sentiment classification**
 
 ## Conclusion
-This project presents a **novel multitask model** that enhances **Aspect-Based Sentiment Analysis** by jointly learning **token classification and masked language modeling**. The approach is validated through extensive **comparative analysis**, demonstrating its superiority in detecting **both implicit and explicit aspects** in text reviews.
+This framework provides a robust pipeline for **Aspect-Based Sentiment Analysis** using **Multi-Task Learning** and various **explainability techniques**. It integrates **attention visualization, BERT-based token classification, LSTM-based sequence labeling, and ensemble sentiment classification** to offer a comparative analysis of different ABSA approaches.
 
----
+## Future Work
+- **Integrate Explainability via Semantic Graphs**
+- **Expand dataset to other domains (electronics, movies, etc.)**
+- **Enhance model robustness with adversarial training**
 
 ## Author
-- **Researcher:** [Akshay Chauhan]
+**Akshay Chauhan**
 
-
-For further inquiries, feel free to contact **[akshaychauhan.jss@gmail.com]**.
-
----
